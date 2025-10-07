@@ -1,6 +1,6 @@
 package ar.edu.unlam.pb2.dominio;
 
-public class PlanAdherente extends Plan {
+public class PlanAdherente extends Plan implements ICalculable {
 
 	public PlanAdherente(Double precioBase) {
 		super(precioBase);
@@ -10,5 +10,13 @@ public class PlanAdherente extends Plan {
 	@Override
 	public String toString() {
 		return "Adherente; Precio Base: $" + getPrecioBase();
+	}
+
+	@Override
+	public Double calcularCuota(Persona p) {
+		if(p.getContadorPrestamos() >= 3) {
+			return this.getPrecioBase() * 0.95;
+		}
+		return this.getPrecioBase();
 	}
 }

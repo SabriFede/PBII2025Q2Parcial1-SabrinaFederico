@@ -12,5 +12,4 @@ public enum TipoDeLibro {
 	public String getDescripcion() {
 		return this.descripcion;
 	}
-
 }

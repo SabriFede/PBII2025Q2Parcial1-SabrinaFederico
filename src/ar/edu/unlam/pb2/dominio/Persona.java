@@ -10,12 +10,15 @@ public class Persona {
 	private Integer dni;
 	private Plan plan;
 	private List<Libro> libros;
+	public Integer contadorPrestamos;
 
 	public Persona(String nombre, Integer dni, Plan plan) {
 		this.nombre = nombre;
 		this.dni = dni;
 		this.plan = plan;
 		this.libros = new ArrayList<>();
+		this.contadorPrestamos = 0;
+
 	}
 
 	public String getNombre() {
@@ -48,6 +51,14 @@ public class Persona {
 
 	public void setLibros(List<Libro> libros) {
 		this.libros = libros;
+	}
+
+	public Integer getContadorPrestamos() {
+		return contadorPrestamos;
+	}
+
+	public void setContadorPrestamos(Integer contadorPrestamos) {
+		this.contadorPrestamos = contadorPrestamos;
 	}
 
 	@Override

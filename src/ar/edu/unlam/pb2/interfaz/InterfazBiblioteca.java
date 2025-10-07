@@ -1,5 +1,6 @@
 package ar.edu.unlam.pb2.interfaz;
 
+import java.time.LocalDate;
 import java.util.Scanner;
 
 import ar.edu.unlam.pb2.dominio.Biblioteca;
@@ -8,6 +9,7 @@ import ar.edu.unlam.pb2.dominio.Persona;
 import ar.edu.unlam.pb2.dominio.Plan;
 import ar.edu.unlam.pb2.dominio.PlanAdherente;
 import ar.edu.unlam.pb2.dominio.PlanPleno;
+import ar.edu.unlam.pb2.dominio.Prestamo;
 import ar.edu.unlam.pb2.dominio.TipoDeLibro;
 
 public class InterfazBiblioteca {
@@ -24,41 +26,179 @@ public class InterfazBiblioteca {
 
 			switch (opcionMenu) {
 			case AGREGAR_SOCIO:
-				if (agregarSocio(biblioteca)) {
-					mostrarPorPantalla("Socio nuevo agregado!");
-				} else {
-					mostrarPorPantalla("El socio no pudo ser agregado.");
-				}
+				agregarSocio(biblioteca);
+				break;
+
+			case AGREGAR_LIBRO:
+				agregarLibro(biblioteca);
+				break;
+
+			case PRESTAR_LIBRO:
+				prestarLibro(biblioteca);
+				break;
+
+			case DEVOLVER_LIBRO:
+				devolverLibro(biblioteca);
 				break;
 
 			case MOSTRAR_LISTA_SOCIOS:
 				mostrarListaSocios(biblioteca);
-
-			case AGREGAR_LIBRO:
-				if (agregarLibro(biblioteca)) {
-					mostrarPorPantalla("Libro agregado exitosamente!");
-				} else {
-					mostrarPorPantalla("No se pudo agregar el libro.");
-				}
-
 				break;
 
-			case SALIR:
-
+			case VER_CUOTA_A_PAGAR_DE_UN_SOCIO:
+				verCuotaDeUnSocio(biblioteca);
 				break;
 
+			default:
+				break;
 			}
 
 		} while (opcionMenu != OpcionesMenu.SALIR);
 
 	}
 
-	private static void mostrarListaSocios(Biblioteca biblioteca) {
-		for (Persona persona : biblioteca.getSocios()) {
-			mostrarPorPantalla(
-					"Nombre: " + persona.getNombre() + "; DNI: " + persona.getDni() + "; Plan: " + persona.getPlan());
-		}
+	private static void agregarSocio(Biblioteca biblioteca) {
+		String nombre;
+		Integer dni;
 
+		nombre = ingresarString("Nombre del socio: ");
+		dni = ingresarEntero("DNI del socio: ");
+
+		int opcion = 0;
+		mostrarPorPantalla("--- Tipos de planes disponibles ---");
+		do {
+			mostrarPorPantalla("1- Adherente");
+			mostrarPorPantalla("2- Pleno");
+			opcion = ingresarEntero("elija un tipo de plan: ");
+		} while (opcion < 1 || opcion > 2);
+
+		switch (opcion) {
+		case 1:
+			Plan planAdherente = new PlanAdherente(1000.0);
+			Persona socioAdherente = new Persona(nombre, dni, planAdherente);
+			if (biblioteca.agregarSocio(socioAdherente)) {
+				mostrarPorPantalla("Se agregó un nuevo socio adherente");
+			} else {
+				mostrarPorPantalla("Ya existe un socio con ese DNI");
+			}
+			break;
+		case 2:
+			Plan planPleno = new PlanPleno(2000.0);
+			Persona socioPleno = new Persona(nombre, dni, planPleno);
+			if (biblioteca.agregarSocio(socioPleno)) {
+				mostrarPorPantalla("Se agregó un nuevo socio adherente");
+			} else {
+				mostrarPorPantalla("Ya existe un socio con ese DNI");
+			}
+			break;
+		}
+	}
+
+	private static void agregarLibro(Biblioteca biblioteca) {
+		String titulo;
+		TipoDeLibro tipo;
+		Integer stock;
+
+		titulo = ingresarString("Titulo del libro: ");
+		tipo = ingresarOpcionDeTipoDeLibroValida();
+		stock = ingresarEntero("Stock del libro: ");
+		/* TODO: revisar */
+		Libro libro = new Libro(1, titulo, tipo, stock);
+		biblioteca.agregarLibro(libro);
+		mostrarPorPantalla("Libro agregado exitosamente");
+	}
+
+	private static void prestarLibro(Biblioteca biblioteca) {
+		Libro libro;
+		Persona socio;
+		Integer dniDelSocio = 0;
+		String nombreDelLibro = "";
+		LocalDate fechaPrestamo;
+
+		dniDelSocio = ingresarEntero("Ingrese dni del socio que realiza el prestamo: ");
+		nombreDelLibro = ingresarString("Ingrese nombre del libro que el socio pide prestado: ");
+
+		if (biblioteca.buscarSocioPorDni(dniDelSocio) != null
+				&& biblioteca.buscarLibroPorNombre(nombreDelLibro) != null) {
+			socio = biblioteca.buscarSocioPorDni(dniDelSocio);
+			libro = biblioteca.buscarLibroPorNombre(nombreDelLibro);
+			fechaPrestamo = ingresarFecha("Fecha en la que se realizo el prestamo: ");
+			Prestamo prestamo = new Prestamo(socio, libro, fechaPrestamo);
+			if (biblioteca.prestarLibro(prestamo)) {
+				mostrarPorPantalla("Se realizo el prestamo exitosamente");
+			} else {
+				mostrarPorPantalla("No se pudo realizar el prestamo");
+			}
+		} else {
+			mostrarPorPantalla("Socio o libro no existente");
+		}
+	}
+
+	private static void devolverLibro(Biblioteca biblioteca) {
+		Libro libro;
+		Persona socio;
+		Integer dniDelSocio = 0;
+		String nombreDelLibro = "";
+		LocalDate fechaDeDevolucion;
+
+		dniDelSocio = ingresarEntero("Ingrese dni del socio que realiza el prestamo: ");
+		nombreDelLibro = ingresarString("Ingrese nombre del libro que el socio pide prestado: ");
+
+		if (biblioteca.buscarSocioPorDni(dniDelSocio) != null
+				&& biblioteca.buscarLibroPorNombre(nombreDelLibro) != null) {
+			socio = biblioteca.buscarSocioPorDni(dniDelSocio);
+			libro = biblioteca.buscarLibroPorNombre(nombreDelLibro);
+			Prestamo prestamo = biblioteca.buscarPrestamoPorSocioYLibro(socio, libro);
+
+			if (prestamo != null) {
+				if (biblioteca.devolverLibro(prestamo)) {
+					mostrarPorPantalla("El libro fue devuelto");
+				} else {
+					mostrarPorPantalla(
+							"La fecha de devolucion no puede ser anterior a la fecha en la que se presto el libro");
+				}
+			} else {
+				mostrarPorPantalla("No se pudo encontrar ese prestamo");
+			}
+
+		} else {
+			mostrarPorPantalla("Socio o libro no existente");
+		}
+	}
+
+	private static void verCuotaDeUnSocio(Biblioteca biblioteca) {
+		Persona socio;
+		Integer dniDelSocio = 0;
+
+		dniDelSocio = ingresarEntero("Ingrese dni del socio del cual se desea saber su cuota: ");
+
+		if (biblioteca.buscarSocioPorDni(dniDelSocio) != null) {
+			socio = biblioteca.buscarSocioPorDni(dniDelSocio);
+			Double cuotaAPagar = biblioteca.calcularCuotaAPagarDeUnSocio(socio);
+			mostrarPorPantalla("El monto a pagar para este socio es de: $" + cuotaAPagar);
+		} else {
+			mostrarPorPantalla("Socio o libro no existente");
+		}
+	}
+
+	private static LocalDate ingresarFecha(String mensaje) {
+		mostrarPorPantalla(mensaje);
+		Integer anio = ingresarEntero("Ingrese anio: ");
+		Integer mes = ingresarEntero("Ingrese mes: ");
+		Integer dia = ingresarEntero("Ingrese dia: ");
+
+		return LocalDate.of(anio, mes, dia);
+	}
+
+	private static void mostrarListaSocios(Biblioteca biblioteca) {
+		if (biblioteca.getSocios().isEmpty()) {
+			mostrarPorPantalla("Todavia no hay socios registrados");
+		} else {
+			for (Persona persona : biblioteca.getSocios()) {
+				mostrarPorPantalla("Nombre: " + persona.getNombre() + "; DNI: " + persona.getDni() + "; Plan: "
+						+ persona.getPlan());
+			}
+		}
 	}
 
 	private static void mostrarPorPantalla(String mensaje) {
@@ -93,27 +233,14 @@ public class InterfazBiblioteca {
 		return teclado.next();
 	}
 
-	private static Boolean agregarLibro(Biblioteca biblioteca) {
-		String tituloLibro = ingresarString("\nIngrese el titulo del Libro");
-		TipoDeLibro tipo = ingresarOpcionDeTipoDeLibroValida();
-		Integer stock = ingresarEntero("Ingrese el stock disponible");
-
-		return biblioteca.agregarLibro(new Libro(tituloLibro, tipo, stock));
-
-	}
-
 	private static TipoDeLibro ingresarOpcionDeTipoDeLibroValida() {
-		Integer opcionElegida;
+		Integer opcion = 0;
 		do {
 			mostrarMenuTipoDeLibro();
-			opcionElegida = ingresarEntero("");
-			if (opcionElegida > 0 && opcionElegida <= TipoDeLibro.values().length) {
-				return TipoDeLibro.values()[opcionElegida - 1];
-			} else {
-				return null;
-			}
-		} while (opcionElegida != null);
+			opcion = ingresarEntero("tipo de libro: ");
+		} while (opcion < 1 || opcion > TipoDeLibro.values().length);
 
+		return TipoDeLibro.values()[opcion - 1];
 	}
 
 	private static void mostrarMenuTipoDeLibro() {
@@ -123,25 +250,4 @@ public class InterfazBiblioteca {
 		}
 		mostrarPorPantalla(tiposDeLibro);
 	}
-
-	private static Boolean agregarSocio(Biblioteca biblioteca) {
-		String nombre = ingresarString("Ingrese el nombre completo");
-		Integer dni = ingresarEntero("Ingrese el nro de DNI");
-
-		Plan plan = null;
-		do {
-			Integer tipoPlan = ingresarEntero(
-					"Seleccione el tipo de plan: \n 1- Adherente ($2000/mes) \n 2- Pleno ($3000/mes)");
-			if (tipoPlan == 1) {
-				plan = new PlanAdherente(2000.00);
-			} else if (tipoPlan == 2) {
-				plan = new PlanPleno(3000.00);
-			} else {
-				mostrarPorPantalla("El plan ingresado no es correcto");
-			}
-		} while (plan == null);
-
-		return biblioteca.agregarSocio(new Persona(nombre, dni, plan));
-	}
-
 }

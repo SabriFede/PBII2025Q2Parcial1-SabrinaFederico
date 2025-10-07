@@ -1,9 +1,9 @@
 package ar.edu.unlam.pb2.dominio;
 
-public abstract class Plan {
+public abstract class Plan implements ICalculable {
 	private Double precioBase;
 	private Integer cantidadMaximaDeLibrosSimultaneos;
-	
+
 	public Plan(Double precioBase) {
 		this.precioBase = precioBase;
 	}

@@ -1,15 +1,22 @@
 package ar.edu.unlam.pb2.dominio;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class Pago implements ICancelable {
 
+	private Integer id;
 	private Penalizacion penalizacion;
 	private LocalDate fechaPago;
 
-	public Pago(Penalizacion penalizacion, LocalDate fechaPago) {
+	public Pago(Integer id, Penalizacion penalizacion, LocalDate fechaPago) {
+		this.id = id;
 		this.penalizacion = penalizacion;
 		this.fechaPago = fechaPago;
+	}
+
+	public Integer getId() {
+		return id;
 	}
 
 	public Penalizacion getPenalizacion() {
@@ -23,6 +30,23 @@ public class Pago implements ICancelable {
 	@Override
 	public Double monto() {
 		return penalizacion.getMontoPenalizacion();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Pago other = (Pago) obj;
+		return Objects.equals(id, other.id);
 	}
 
 }

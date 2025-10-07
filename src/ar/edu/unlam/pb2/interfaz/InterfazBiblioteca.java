@@ -5,6 +5,7 @@ import java.util.Scanner;
 
 import ar.edu.unlam.pb2.dominio.Biblioteca;
 import ar.edu.unlam.pb2.dominio.Libro;
+import ar.edu.unlam.pb2.dominio.Penalizacion;
 import ar.edu.unlam.pb2.dominio.Persona;
 import ar.edu.unlam.pb2.dominio.Plan;
 import ar.edu.unlam.pb2.dominio.PlanAdherente;
@@ -49,11 +50,36 @@ public class InterfazBiblioteca {
 				verCuotaDeUnSocio(biblioteca);
 				break;
 
+			case REGISTRAR_UN_PAGO:
+				registrarPago(biblioteca);
+				break;
+
 			default:
 				break;
 			}
 
 		} while (opcionMenu != OpcionesMenu.SALIR);
+
+	}
+
+	private static void registrarPago(Biblioteca biblioteca) {
+
+		Integer dni = ingresarEntero("Ingrese el DNI del socio");
+		for (Penalizacion penalizacion : biblioteca.buscarPenalizacionesPorDni(dni)) {
+			if (penalizacion.getFechaCancelacion() == null) {
+				mostrarPorPantalla("ID de la penalizacion" + penalizacion.getId() + " Monto a pagar: $"
+						+ penalizacion.getMontoPenalizacion());
+			}
+		}
+
+		Integer idAPagar = ingresarEntero("Ingrese el ID de la penalizacion a pagar");
+		Penalizacion penalizacionAPagar = biblioteca.buscarPenalizacionPorId(idAPagar);
+
+		if (biblioteca.registrarPago(penalizacionAPagar)) {
+			mostrarPorPantalla("El pago fue registrado correctamente");
+		} else {
+			mostrarPorPantalla("No se pudo registrar el pago");
+		}
 
 	}
 
@@ -95,39 +121,45 @@ public class InterfazBiblioteca {
 	}
 
 	private static void agregarLibro(Biblioteca biblioteca) {
+		Integer id;
 		String titulo;
 		TipoDeLibro tipo;
 		Integer stock;
 
+		id = ingresarEntero("Ingrese el ID del libro: ");
 		titulo = ingresarString("Titulo del libro: ");
 		tipo = ingresarOpcionDeTipoDeLibroValida();
 		stock = ingresarEntero("Stock del libro: ");
-		/* TODO: revisar */
-		Libro libro = new Libro(1, titulo, tipo, stock);
-		biblioteca.agregarLibro(libro);
-		mostrarPorPantalla("Libro agregado exitosamente");
+
+		Libro libro = new Libro(id, titulo, tipo, stock);
+		if (biblioteca.agregarLibro(libro)) {
+			mostrarPorPantalla("Libro agregado exitosamente");
+		} else {
+			mostrarPorPantalla("No se pudo agregar el libro");
+		}
+
 	}
 
 	private static void prestarLibro(Biblioteca biblioteca) {
 		Libro libro;
 		Persona socio;
-		Integer dniDelSocio = 0;
-		String nombreDelLibro = "";
+		Integer dniDelSocio;
+		Integer idLibro;
 		LocalDate fechaPrestamo;
 
-		dniDelSocio = ingresarEntero("Ingrese dni del socio que realiza el prestamo: ");
-		nombreDelLibro = ingresarString("Ingrese nombre del libro que el socio pide prestado: ");
+		dniDelSocio = ingresarEntero("Ingrese dni del socio que solicita el prestamo: ");
+		idLibro = ingresarEntero("Ingrese el ID del libro a retirar");
 
-		if (biblioteca.buscarSocioPorDni(dniDelSocio) != null
-				&& biblioteca.buscarLibroPorNombre(nombreDelLibro) != null) {
-			socio = biblioteca.buscarSocioPorDni(dniDelSocio);
-			libro = biblioteca.buscarLibroPorNombre(nombreDelLibro);
+		socio = biblioteca.buscarSocioPorDni(dniDelSocio);
+		libro = biblioteca.buscarLibroPorId(idLibro);
+
+		if (socio != null && libro != null) {
 			fechaPrestamo = ingresarFecha("Fecha en la que se realizo el prestamo: ");
 			Prestamo prestamo = new Prestamo(socio, libro, fechaPrestamo);
 			if (biblioteca.prestarLibro(prestamo)) {
 				mostrarPorPantalla("Se realizo el prestamo exitosamente");
 			} else {
-				mostrarPorPantalla("No se pudo realizar el prestamo");
+				mostrarPorPantalla("No se pudo realizar el prestamo. Revisar penalizaciones del socio.");
 			}
 		} else {
 			mostrarPorPantalla("Socio o libro no existente");
@@ -137,25 +169,24 @@ public class InterfazBiblioteca {
 	private static void devolverLibro(Biblioteca biblioteca) {
 		Libro libro;
 		Persona socio;
-		Integer dniDelSocio = 0;
-		String nombreDelLibro = "";
-		LocalDate fechaDeDevolucion;
+		Integer dniDelSocio;
+		String nombreDelLibro;
 
-		dniDelSocio = ingresarEntero("Ingrese dni del socio que realiza el prestamo: ");
-		nombreDelLibro = ingresarString("Ingrese nombre del libro que el socio pide prestado: ");
+		dniDelSocio = ingresarEntero("Ingrese dni del socio que realiza la devolucion: ");
+		nombreDelLibro = ingresarString("Ingrese nombre del libro que se devuelve: ");
 
-		if (biblioteca.buscarSocioPorDni(dniDelSocio) != null
-				&& biblioteca.buscarLibroPorNombre(nombreDelLibro) != null) {
-			socio = biblioteca.buscarSocioPorDni(dniDelSocio);
-			libro = biblioteca.buscarLibroPorNombre(nombreDelLibro);
+		socio = biblioteca.buscarSocioPorDni(dniDelSocio);
+		libro = biblioteca.buscarLibroPorNombre(nombreDelLibro);
+
+		if (socio != null && libro != null) {
+
 			Prestamo prestamo = biblioteca.buscarPrestamoPorSocioYLibro(socio, libro);
 
 			if (prestamo != null) {
 				if (biblioteca.devolverLibro(prestamo)) {
 					mostrarPorPantalla("El libro fue devuelto");
 				} else {
-					mostrarPorPantalla(
-							"La fecha de devolucion no puede ser anterior a la fecha en la que se presto el libro");
+					mostrarPorPantalla("No se pudo realizar la devolucion");
 				}
 			} else {
 				mostrarPorPantalla("No se pudo encontrar ese prestamo");
@@ -168,13 +199,15 @@ public class InterfazBiblioteca {
 
 	private static void verCuotaDeUnSocio(Biblioteca biblioteca) {
 		Persona socio;
-		Integer dniDelSocio = 0;
+		Integer dniDelSocio;
 
 		dniDelSocio = ingresarEntero("Ingrese dni del socio del cual se desea saber su cuota: ");
 
-		if (biblioteca.buscarSocioPorDni(dniDelSocio) != null) {
-			socio = biblioteca.buscarSocioPorDni(dniDelSocio);
-			Double cuotaAPagar = biblioteca.calcularCuotaAPagarDeUnSocio(socio);
+		socio = biblioteca.buscarSocioPorDni(dniDelSocio);
+
+		if (socio != null) {
+
+			Double cuotaAPagar = biblioteca.getCuotaAPagarDeUnSocio(socio);
 			mostrarPorPantalla("El monto a pagar para este socio es de: $" + cuotaAPagar);
 		} else {
 			mostrarPorPantalla("Socio o libro no existente");

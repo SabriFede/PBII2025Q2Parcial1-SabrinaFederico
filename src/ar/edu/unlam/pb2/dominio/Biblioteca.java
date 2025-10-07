@@ -13,7 +13,7 @@ public class Biblioteca {
 	private Set<Libro> libros;
 	private Set<Persona> socios;
 	private List<Prestamo> prestamos;
-
+	private Set<Pago> pagos;
 	private Set<Penalizacion> penalizaciones;
 
 	public Biblioteca() {
@@ -21,6 +21,11 @@ public class Biblioteca {
 		this.socios = new HashSet<>();
 		this.prestamos = new ArrayList<>();
 		this.penalizaciones = new HashSet<Penalizacion>();
+		this.pagos = new HashSet<Pago>();
+	}
+
+	public Set<Penalizacion> getPenalizaciones() {
+		return penalizaciones;
 	}
 
 	public Set<Libro> getLibros() {
@@ -64,6 +69,15 @@ public class Biblioteca {
 		for (Libro l : this.libros) {
 			if (l.getTitulo().equalsIgnoreCase(nombre)) {
 				return l;
+			}
+		}
+		return null;
+	}
+
+	public Libro buscarLibroPorId(Integer id) {
+		for (Libro libro : this.libros) {
+			if (libro.getId() == id) {
+				return libro;
 			}
 		}
 		return null;
@@ -121,7 +135,41 @@ public class Biblioteca {
 		return this.prestamos.remove(prestamo);
 	}
 
-	public Double calcularCuotaAPagarDeUnSocio(Persona socio) {
-		return socio.getPlan().calcularCuota(socio) + socio.getMontoPagarPenalizacion();
+	public Double getCuotaAPagarDeUnSocio(Persona socio) {
+		return socio.getPlan().calcularCuota(socio);
+	}
+
+	public Boolean registrarPago(Penalizacion penalizacion) {
+		Integer nuevoId = 0;
+
+		for (Pago pago : pagos) {
+			if (nuevoId < pago.getId()) {
+				nuevoId = pago.getId();
+			}
+		}
+		penalizacion.setFechaCancelacion(LocalDate.now());
+		return pagos.add(new Pago(nuevoId + 1, penalizacion, LocalDate.now()));
+	}
+
+	public Set<Penalizacion> buscarPenalizacionesPorDni(Integer dni) {
+		Set<Penalizacion> listaPenalizacionesPorDni = new HashSet<Penalizacion>();
+
+		for (Penalizacion penalizacion : penalizaciones) {
+			if (dni.equals(penalizacion.getPrestamo().getSocio().getDni())) {
+				listaPenalizacionesPorDni.add(penalizacion);
+			}
+
+		}
+		return listaPenalizacionesPorDni;
+
+	}
+
+	public Penalizacion buscarPenalizacionPorId(Integer id) {
+		for (Penalizacion penalizacion : penalizaciones) {
+			if (id == penalizacion.getId()) {
+				return penalizacion;
+			}
+		}
+		return null;
 	}
 }

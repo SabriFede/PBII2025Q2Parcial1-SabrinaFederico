@@ -29,6 +29,7 @@ public class Pago implements ICancelable {
 
 	@Override
 	public Double monto() {
+		// Defino que el pago es por el monto total de la penalizacion
 		return penalizacion.getMontoPenalizacion();
 	}
 

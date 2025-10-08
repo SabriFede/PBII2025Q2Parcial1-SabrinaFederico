@@ -29,6 +29,7 @@ public class Pago implements ICancelable {
 
 	@Override
 	public Double monto() {
+		// Comentario para generar conflicto
 		return penalizacion.getMontoPenalizacion();
 	}
 
